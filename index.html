@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#05050a">
+<title>دگردیسی — چهرهٔ خندان</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%23d9a441' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%23d9a441'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+  href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;400;700&family=JetBrains+Mono:wght@300;400&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #05050a; color: #e8e2d4;
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation; cursor: crosshair;
+    overscroll-behavior: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .grain {
+    position: fixed; inset: -50%; z-index: 100; pointer-events: none;
+    opacity: 0.035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grainShift 8s steps(8) infinite;
+  }
+  @keyframes grainShift {
+    0%{transform:translate(0,0)} 20%{transform:translate(-2%,-1%)}
+    40%{transform:translate(1%,2%)} 60%{transform:translate(-1%,1%)}
+    80%{transform:translate(2%,-1%)} 100%{transform:translate(0,0)}
+  }
+  .vignette {
+    position: fixed; inset: 0; z-index: 90; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%,
+      transparent 0%, transparent 38%,
+      rgba(5,5,10,0.32) 58%, rgba(5,5,10,0.8) 80%, #05050a 100%);
+  }
+  .center-mark {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); z-index: 80;
+    pointer-events: none; text-align: center;
+    animation: breathe 6s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100%{opacity:.5} 50%{opacity:.9} }
+  .center-mark .phi {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(22px, 4.5vw, 40px);
+    color: #d9a441; line-height: 1;
+    text-shadow: 0 0 24px rgba(217,164,65,.55), 0 0 60px rgba(217,164,65,.25);
+    letter-spacing: .05em; transition: opacity .4s ease;
+  }
+  .center-mark .label {
+    display: block; margin-top: 10px;
+    font-size: clamp(8px, 1.4vw, 10px); font-weight: 400;
+    letter-spacing: .55em; color: rgba(232,226,212,.48);
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    transition: opacity .4s ease; min-height: 12px;
+  }
+  .hud {
+    position: fixed; z-index: 70;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .22em;
+    color: rgba(232,226,212,.3);
+    pointer-events: none; text-transform: uppercase;
+    user-select: none;
+  }
+  .hud.tl { top: 22px; left: 22px; }
+  .hud.tr { top: 22px; right: 22px; text-align: right; }
+  .hud.bl { bottom: 22px; left: 22px; }
+  .hud.br { bottom: 22px; right: 22px; text-align: right; }
+  .hud .dot {
+    display: inline-block; width: 5px; height: 5px;
+    border-radius: 50%; background: #d9a441;
+    margin-inline-end: 6px; vertical-align: middle;
+    box-shadow: 0 0 8px #d9a441;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .hud .depth {
+    display: block; margin-top: 4px;
+    color: rgba(217,164,65,.55);
+    font-variant-numeric: tabular-nums; direction: ltr;
+  }
+  .progress-track {
+    position: fixed; bottom: 22px; left: 50%;
+    transform: translateX(-50%); z-index: 70;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 18px; border-radius: 100px;
+    background: rgba(13,13,21,.55);
+    border: 1px solid rgba(217,164,65,.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    pointer-events: none; user-select: none;
+  }
+  .progress-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(232,226,212,.18);
+    transition: all .5s cubic-bezier(.22,.61,.36,1);
+    flex-shrink: 0;
+  }
+  .progress-dot.active {
+    width: 22px; border-radius: 100px;
+    box-shadow: 0 0 14px currentColor;
+  }
+  .hint {
+    position: fixed; bottom: 78px; left: 50%;
+    transform: translateX(-50%); z-index: 70;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .3em;
+    color: rgba(232,226,212,.26); text-transform: uppercase;
+    pointer-events: none;
+    animation: hintFade 5s ease-in-out infinite;
+    white-space: nowrap; text-align: center;
+  }
+  @keyframes hintFade { 0%,100%{opacity:.18} 50%{opacity:.6} }
+  .hint .sensor-hint {
+    display: block; margin-top: 6px;
+    font-size: 9px; letter-spacing: .22em;
+    color: rgba(217,164,65,.5);
+  }
+  .pause-btn {
+    position: fixed; top: 50%; inset-inline-end: 22px;
+    transform: translateY(-50%); z-index: 200;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid rgba(217,164,65,.22);
+    background: rgba(217,164,65,.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: rgba(217,164,65,.75);
+    display: grid; place-items: center;
+    cursor: pointer; transition: all .3s ease; padding: 0;
+  }
+  .pause-btn:hover {
+    background: rgba(217,164,65,.14);
+    border-color: rgba(217,164,65,.5);
+    color: #d9a441;
+  }
+  .pause-btn svg { width: 14px; height: 14px; }
+  .pause-btn .icon-play { display: none; }
+  .pause-btn.paused .icon-pause { display: none; }
+  .pause-btn.paused .icon-play { display: block; }
+  @media (max-width: 600px) {
+    .hud { font-size: 9px; letter-spacing: .18em; }
+    .hud.tl, .hud.tr { top: 16px; }
+    .hud.tl { left: 14px; } .hud.tr { right: 14px; }
+    .hud.bl { bottom: 16px; left: 14px; }
+    .hud.br { bottom: 16px; right: 14px; }
+    .pause-btn { top: auto; bottom: 78px; inset-inline-end: 14px; transform: none; }
+    .hint { bottom: 128px; font-size: 9px; letter-spacing: .2em; }
+    .progress-track { padding: 6px 14px; gap: 8px; }
+    .progress-dot { width: 5px; height: 5px; }
+    .progress-dot.active { width: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grain, .center-mark, .hud .dot, .hint { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="center-mark" aria-hidden="true">
+  <span class="phi">φ</span>
+  <span class="label" id="shapeLabel">ROSE</span>
+</div>
+
+<div class="hud tl" aria-hidden="true">
+  <span class="dot"></span>METAMORPHOSIS
+  <span class="depth" id="shapeNum">01 / 06</span>
+</div>
+<div class="hud tr" aria-hidden="true">
+  PHASE · <span id="phaseLabel">MORPH</span>
+  <span class="depth" id="fpsLabel">60 fps</span>
+</div>
+<div class="hud bl" aria-hidden="true">
+  <span id="particleCount">0</span> PARTICLES
+</div>
+<div class="hud br" aria-hidden="true">
+  <span id="sensorLabel">SENSOR · OFF</span>
+</div>
+
+<div class="hint" aria-hidden="true">
+  CLICK · TO · TRANSFORM
+  <span class="sensor-hint" id="sensorHint">TILT YOUR PHONE TO MAKE PARTICLES MOVE</span>
+</div>
+
+<div class="progress-track" id="progressTrack" aria-hidden="true"></div>
+
+<button class="pause-btn" id="pauseBtn" type="button" aria-label="توقف / ادامه">
+  <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="4" width="4" height="16" rx="1"/>
+    <rect x="14" y="4" width="4" height="16" rx="1"/>
+  </svg>
+  <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 5v14l11-7z"/>
+  </svg>
+</button>
+
+<script>
+(function () {
+  'use strict';
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = matchMedia('(max-width: 768px)').matches;
+  const lowEnd = (navigator.hardwareConcurrency || 4) <= 4;
+
+  let DPR_CAP = isMobile || lowEnd ? 1.6 : 2;
+  if (prefersReduced) DPR_CAP = 1.2;
+
+  const TAU = Math.PI * 2;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function mixColor(a, b, k) {
+    return {
+      r: Math.round(a.r + (b.r - a.r) * k),
+      g: Math.round(a.g + (b.g - a.g) * k),
+      b: Math.round(a.b + (b.b - a.b) * k)
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ابعاد
+     ═══════════════════════════════════════════════════════ */
+  let W = 0, H = 0, CX = 0, CY = 0, SCALE = 0, dpr = 1;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    W = Math.max(1, rect.width);
+    H = Math.max(1, rect.height);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    CX = W / 2;
+    CY = H / 2;
+    SCALE = Math.min(W, H) * 0.42;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ابزار مسیر
+     ═══════════════════════════════════════════════════════ */
+  function pathToPoints(path, count, jitter, colorFn) {
+    const segs = [];
+    let total = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+      const len = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+      segs.push(len);
+      total += len;
+    }
+    const out = [];
+    if (total === 0 || count === 0) return out;
+    for (let i = 0; i < count; i++) {
+      const t = total * i / (count - 1);
+      let acc = 0, si = 0;
+      while (si < segs.length - 1 && acc + segs[si] < t) { acc += segs[si]; si++; }
+      const lt = segs[si] > 0 ? (t - acc) / segs[si] : 0;
+      const p0 = path[si], p1 = path[si + 1];
+      const x = p0[0] + (p1[0] - p0[0]) * lt;
+      const y = p0[1] + (p1[1] - p0[1]) * lt;
+      const c = colorFn(i / count, si / Math.max(1, segs.length - 1));
+      out.push({
+        x: x + (Math.random() - 0.5) * jitter,
+        y: y + (Math.random() - 0.5) * jitter,
+        r: c.r, g: c.g, b: c.b
+      });
+    }
+    return out;
+  }
+
+  function mirrorPath(halfPath) {
+    const full = halfPath.slice();
+    for (let i = halfPath.length - 2; i >= 0; i--) {
+      full.push([-halfPath[i][0], halfPath[i][1]]);
+    }
+    return full;
+  }
+
+  /* توزیع یکنواخت در بیضی */
+  function ellipsePts(cx, cy, rx, ry, count, colorFn) {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * TAU;
+      const r = Math.sqrt(Math.random());
+      const c = colorFn(r, a, i / count);
+      out.push({
+        x: cx + Math.cos(a) * rx * r,
+        y: cy + Math.sin(a) * ry * r,
+        r: c.r, g: c.g, b: c.b
+      });
+    }
+    return out;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     شکل‌ها
+     ═══════════════════════════════════════════════════════ */
+  const ShapeGen = {
+
+    rose(n) {
+      const pts = [];
+      const centerN = Math.floor(n * 0.20);
+      const petalN = n - centerN;
+      for (let i = 0; i < centerN; i++) {
+        const t = i / centerN;
+        const a = t * Math.PI * 16;
+        const r = 0.03 + t * 0.28;
+        const k = 0.4 + t * 0.6;
+        pts.push({
+          x: Math.cos(a) * r, y: Math.sin(a) * r,
+          r: Math.round(180 + k * 60), g: Math.round(50 + k * 30), b: Math.round(90 + k * 50)
+        });
+      }
+      const rings = 5;
+      const ringColors = [
+        { r: 255, g: 180, b: 200 }, { r: 255, g: 150, b: 180 },
+        { r: 245, g: 120, b: 155 }, { r: 225, g: 90, b: 130 }, { r: 200, g: 70, b: 110 }
+      ];
+      for (let ring = 0; ring < rings; ring++) {
+        const ringT = ring / (rings - 1);
+        const rBase = 0.30 + ringT * 0.55;
+        const petals = 6 + ring * 3;
+        const count = Math.floor(petalN / rings);
+        const perPetal = Math.max(1, Math.floor(count / petals));
+        const rot = ring * 0.42;
+        const col = ringColors[ring];
+        for (let p = 0; p < petals; p++) {
+          const baseAng = (p / petals) * TAU + rot;
+          for (let i = 0; i < perPetal; i++) {
+            const t = i / perPetal;
+            const r = rBase + t * (0.10 + ringT * 0.02);
+            const width = Math.sin(t * Math.PI) * (0.12 + ringT * 0.04);
+            const jitter = (Math.random() - 0.5) * width;
+            const normAng = baseAng + Math.PI / 2;
+            const c = mixColor(col, { r: 255, g: 220, b: 235 }, 0.25 * Math.random());
+            pts.push({
+              x: Math.cos(baseAng) * r + Math.cos(normAng) * jitter,
+              y: Math.sin(baseAng) * r + Math.sin(normAng) * jitter,
+              r: c.r, g: c.g, b: c.b
+            });
+          }
+        }
+      }
+      while (pts.length < n) {
+        const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 0.2;
+        pts.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, r: 230, g: 100, b: 140 });
+      }
+      return pts.slice(0, n);
+    },
+
+    daisy(n) {
+      const pts = [];
+      const centerN = Math.floor(n * 0.20);
+      const petalN = n - centerN;
+      const GA = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < centerN; i++) {
+        const r = Math.sqrt(i / centerN) * 0.20;
+        const a = i * GA;
+        const t = i / centerN;
+        pts.push({
+          x: Math.cos(a) * r, y: Math.sin(a) * r,
+          r: Math.round(255 - t * 30), g: Math.round(200 - t * 40), b: Math.round(70 - t * 20)
+        });
+      }
+      const petals = 16;
+      const perPetal = Math.max(2, Math.floor(petalN / petals));
+      for (let p = 0; p < petals; p++) {
+        const baseAng = (p / petals) * TAU - Math.PI / 2;
+        const localN = perPetal + (p < petalN % petals ? 1 : 0);
+        for (let i = 0; i < localN; i++) {
+          const t = i / Math.max(1, localN - 1);
+          const r = 0.18 + t * 0.68;
+          const width = Math.sin(t * Math.PI) * 0.10;
+          const jitter = (Math.random() - 0.5) * width;
+          const normAng = baseAng + Math.PI / 2;
+          const shade = 0.7 + Math.random() * 0.3;
+          pts.push({
+            x: Math.cos(baseAng) * r + Math.cos(normAng) * jitter,
+            y: Math.sin(baseAng) * r + Math.sin(normAng) * jitter,
+            r: Math.round(250 * shade + 5), g: Math.round(248 * shade + 7), b: Math.round(235 * shade + 20)
+          });
+        }
+      }
+      while (pts.length < n) {
+        pts.push({ x: rand(-0.1, 0.1), y: rand(-0.1, 0.1), r: 255, g: 220, b: 90 });
+      }
+      return pts.slice(0, n);
+    },
+
+    sunflower(n) {
+      const pts = [];
+      const centerN = Math.floor(n * 0.26);
+      const petalN = n - centerN;
+      const GA = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < centerN; i++) {
+        const t = i / centerN;
+        const r = Math.sqrt(i / centerN) * 0.32;
+        const a = i * GA;
+        const dark = 0.4 + Math.random() * 0.5;
+        pts.push({
+          x: Math.cos(a) * r, y: Math.sin(a) * r,
+          r: Math.round(60 + dark * 40), g: Math.round(35 + dark * 30), b: Math.round(20 + dark * 20)
+        });
+      }
+      const petals = 24;
+      const perPetal = Math.max(2, Math.floor(petalN / petals));
+      for (let p = 0; p < petals; p++) {
+        const baseAng = (p / petals) * TAU;
+        const localN = perPetal + (p < petalN % petals ? 1 : 0);
+        for (let i = 0; i < localN; i++) {
+          const t = i / Math.max(1, localN - 1);
+          const r = 0.30 + t * 0.62;
+          const width = Math.sin(t * Math.PI) * 0.055 * (1 - t * 0.4);
+          const jitter = (Math.random() - 0.5) * width;
+          const normAng = baseAng + Math.PI / 2;
+          const golden = 0.75 + Math.random() * 0.25;
+          const col = mixColor({ r: 255, g: 200, b: 60 }, { r: 255, g: 140, b: 30 }, t);
+          pts.push({
+            x: Math.cos(baseAng) * r + Math.cos(normAng) * jitter,
+            y: Math.sin(baseAng) * r + Math.sin(normAng) * jitter,
+            r: Math.round(col.r * golden), g: Math.round(col.g * golden), b: Math.round(col.b * golden)
+          });
+        }
+      }
+      while (pts.length < n) {
+        pts.push({ x: rand(-0.15, 0.15), y: rand(-0.15, 0.15), r: 80, g: 50, b: 25 });
+      }
+      return pts.slice(0, n);
+    },
+
+    lotus(n) {
+      const pts = [];
+      const centerN = Math.floor(n * 0.10);
+      const petalN = n - centerN;
+      for (let i = 0; i < centerN; i++) {
+        const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 0.13;
+        pts.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, r: 255, g: 230, b: 140 });
+      }
+      const layers = 3;
+      const layerColors = [
+        { r: 235, g: 190, b: 255 }, { r: 190, g: 140, b: 240 }, { r: 140, g: 90, b: 200 }
+      ];
+      for (let layer = 0; layer < layers; layer++) {
+        const layerT = layer / (layers - 1);
+        const petals = 8 + layer * 2;
+        const rBase = 0.14 + layerT * 0.28;
+        const rMax = rBase + 0.42 - layerT * 0.05;
+        const count = Math.floor(petalN / layers);
+        const perPetal = Math.max(2, Math.floor(count / petals));
+        const rot = layer * 0.22;
+        const col = layerColors[layer];
+        for (let p = 0; p < petals; p++) {
+          const baseAng = (p / petals) * TAU + rot;
+          for (let i = 0; i < perPetal; i++) {
+            const t = i / perPetal;
+            const r = rBase + t * (rMax - rBase);
+            const width = Math.sin(t * Math.PI) * 0.09 * (1 - t * 0.5);
+            const jitter = (Math.random() - 0.5) * width;
+            const normAng = baseAng + Math.PI / 2;
+            const c = mixColor(col, { r: 255, g: 245, b: 255 }, t * 0.35);
+            pts.push({
+              x: Math.cos(baseAng) * r + Math.cos(normAng) * jitter,
+              y: Math.sin(baseAng) * r + Math.sin(normAng) * jitter,
+              r: c.r, g: c.g, b: c.b
+            });
+          }
+        }
+      }
+      while (pts.length < n) {
+        pts.push({ x: rand(-0.1, 0.1), y: rand(-0.1, 0.1), r: 220, g: 180, b: 255 });
+      }
+      return pts.slice(0, n);
+    },
+
+    poppy(n) {
+      const pts = [];
+      const centerN = Math.floor(n * 0.14);
+      const petalN = n - centerN;
+      for (let i = 0; i < centerN; i++) {
+        const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 0.16;
+        pts.push({
+          x: Math.cos(a) * r, y: Math.sin(a) * r,
+          r: 30 + Math.random() * 25, g: 20 + Math.random() * 15, b: 25 + Math.random() * 20
+        });
+      }
+      const petals = 5;
+      const perPetal = Math.floor(petalN / petals);
+      for (let p = 0; p < petals; p++) {
+        const baseAng = (p / petals) * TAU - Math.PI / 2 + 0.15;
+        const localN = perPetal + (p < petalN % petals ? 1 : 0);
+        for (let i = 0; i < localN; i++) {
+          const t = i / Math.max(1, localN - 1);
+          const r = 0.10 + t * 0.78;
+          const width = Math.sin(t * Math.PI) * 0.22;
+          const jitter = (Math.random() - 0.5) * width;
+          const normAng = baseAng + Math.PI / 2;
+          const shade = 0.55 + Math.random() * 0.45;
+          const vein = Math.abs(jitter) < width * 0.15 ? 0.55 : 1;
+          pts.push({
+            x: Math.cos(baseAng) * r + Math.cos(normAng) * jitter,
+            y: Math.sin(baseAng) * r + Math.sin(normAng) * jitter,
+            r: Math.round(230 * shade * vein), g: Math.round(50 * shade * vein), b: Math.round(55 * shade * vein)
+          });
+        }
+      }
+      while (pts.length < n) {
+        pts.push({ x: rand(-0.1, 0.1), y: rand(-0.1, 0.1), r: 40, g: 25, b: 30 });
+      }
+      return pts.slice(0, n);
+    },
+
+    /* ═══════════════════════════════════════════════════════
+       چهرهٔ زن خندان — تمام‌رخ با جزئیات کامل
+       ═══════════════════════════════════════════════════════ */
+    woman(n) {
+      const pts = [];
+
+      /* ── پالت رنگی استخراج‌شده از تصویر ── */
+      const SKIN_BASE   = { r: 224, g: 176, b: 148 };
+      const SKIN_LIGHT  = { r: 246, g: 208, b: 180 };
+      const SKIN_SHADOW = { r: 178, g: 130, b: 105 };
+      const SKIN_DEEP   = { r: 140, g: 98,  b: 80 };
+
+      const HAIR_DEEP  = { r: 22,  g: 14,  b: 20 };
+      const HAIR_MID   = { r: 42,  g: 30,  b: 38 };
+      const HAIR_EDGE  = { r: 68,  g: 50,  b: 58 };
+      const HAIR_SHINE = { r: 95,  g: 72,  b: 80 };
+
+      const EYE_WHITE  = { r: 246, g: 240, b: 232 };
+      const IRIS_WARM  = { r: 88,  g: 55,  b: 38 };
+      const IRIS_DARK  = { r: 45,  g: 28,  b: 22 };
+      const PUPIL      = { r: 12,  g: 10,  b: 12 };
+      const LASH       = { r: 18,  g: 12,  b: 15 };
+      const CATCHLIGHT = { r: 255, g: 253, b: 248 };
+      const BROW       = { r: 38,  g: 26,  b: 30 };
+
+      const LIP_TOP    = { r: 198, g: 92,  b: 100 };
+      const LIP_BOT    = { r: 216, g: 108, b: 112 };
+      const LIP_EDGE   = { r: 155, g: 60,  b: 70 };
+      const TOOTH      = { r: 252, g: 248, b: 244 };
+      const TOOTH_SHAD = { r: 210, g: 200, b: 192 };
+      const TONGUE     = { r: 218, g: 118, b: 125 };
+      const MOUTH_DARK = { r: 62,  g: 22,  b: 32 };
+
+      const BLUSH      = { r: 234, g: 152, b: 130 };
+      const GOLD       = { r: 222, g: 178, b: 88 };
+      const GOLD_DEEP  = { r: 175, g: 130, b: 55 };
+
+      const RED_COAT   = { r: 195, g: 42,  b: 48 };
+      const WHITE_SHIRT = { r: 248, g: 245, b: 240 };
+      const GREEN_TIE  = { r: 30,  g: 78,  b: 55 };
+
+      /* ── بودجه‌بندی ذرات (جمع = ۱.۰) ── */
+      const B_SKIN      = Math.floor(n * 0.12);
+      const B_HAIR      = Math.floor(n * 0.22);
+      const B_BROW      = Math.floor(n * 0.045);
+      const B_EYES      = Math.floor(n * 0.15);
+      const B_NOSE      = Math.floor(n * 0.05);
+      const B_MOUTH     = Math.floor(n * 0.22);
+      const B_CHEEK     = Math.floor(n * 0.06);
+      const B_CHIN      = Math.floor(n * 0.03);
+      const B_NECK      = Math.floor(n * 0.03);
+      const B_CLOTHES   = Math.floor(n * 0.05);
+      const B_EARRING   = Math.floor(n * 0.015);
+      const B_HAIR_TOP  = n - B_SKIN - B_HAIR - B_BROW - B_EYES - B_NOSE
+                            - B_MOUTH - B_CHEEK - B_CHIN - B_NECK - B_CLOTHES - B_EARRING;
+
+      /* ═══════════════════════════════════════════
+         ۱. پایهٔ پوست — بیضی صورت
+         ═══════════════════════════════════════════ */
+      for (let i = 0; i < B_SKIN; i++) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random());
+        /* بیضی کشیده با پهنای بیشتر در گونه */
+        const rx = 0.36 * (1 - 0.15 * Math.pow(Math.max(0, Math.sin(a)) * r, 2));
+        const ry = 0.68;
+        const x = Math.cos(a) * rx * r;
+        const y = Math.sin(a) * ry * r - 0.05;
+        /* گرادیان رنگی بر اساس موقعیت */
+        const shade = (y + 0.7) / 1.4;
+        const c = mixColor(SKIN_LIGHT, SKIN_BASE, clamp(shade, 0, 1));
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۲. مو — موج‌دار، چندلایه
+         ═══════════════════════════════════════════ */
+
+      /* لایهٔ حجم اصلی پشت سر */
+      for (let i = 0; i < Math.floor(B_HAIR * 0.55); i++) {
+        const a = Math.PI * (1.05 + Math.random() * 0.9);
+        const r = 0.42 + Math.random() * 0.28;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r - 0.05 + Math.random() * 0.3;
+        /* موج‌دار کردن */
+        const wave = Math.sin(y * 8 + x * 5) * 0.03;
+        const c = mixColor(HAIR_DEEP, HAIR_MID, Math.random());
+        pts.push({ x: x + wave, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* رشته‌های جاری کنار صورت (راست و چپ) */
+      for (let i = 0; i < Math.floor(B_HAIR * 0.30); i++) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const t = Math.random();
+        /* منحنی از بالای سر تا پایین */
+        const startX = side * (0.30 + Math.random() * 0.15);
+        const startY = -0.55 - t * 0.15;
+        const endX = side * (0.42 + Math.random() * 0.15);
+        const endY = 0.35 + t * 0.85;
+        /* درهم‌ریختگی */
+        const wobble = Math.sin(t * 6 + side) * 0.06;
+        const x = lerp(startX, endX, t) + wobble;
+        const y = startY + (endY - startY) * t;
+        const c = mixColor(HAIR_MID, HAIR_EDGE, t * 0.6);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* رشته‌های نازک روی پیشانی و صورت */
+      for (let i = 0; i < Math.floor(B_HAIR * 0.15); i++) {
+        const side = Math.random() < 0.5 ? 1 : -1;
+        const t = Math.random();
+        const x = side * (0.05 + t * 0.35) + Math.sin(t * 5) * 0.03;
+        const y = -0.55 + t * 0.7;
+        const c = mixColor(HAIR_DEEP, HAIR_EDGE, Math.random() * 0.5);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۳. پیشانی روشن
+         ═══════════════════════════════════════════ */
+      for (let i = 0; i < B_HAIR_TOP; i++) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.22;
+        const x = Math.cos(a) * r * 0.85;
+        const y = -0.42 + Math.sin(a) * r * 0.5;
+        const c = mixColor(SKIN_LIGHT, SKIN_BASE, Math.random() * 0.4);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۴. ابروها — ضخیم، طبیعی
+         ═══════════════════════════════════════════ */
+      const browPath = [
+        [0.06, -0.30], [0.14, -0.34], [0.24, -0.34], [0.32, -0.28]
+      ];
+      const browFull = mirrorPath(browPath);
+      pts.push.apply(pts, pathToPoints(browFull, Math.floor(B_BROW * 0.7), 0.012, (t) => {
+        return mixColor(BROW, { r: 60, g: 42, b: 45 }, t * 0.3);
+      }));
+
+      /* پراکندگی اضافه برای ضخامت ابرو */
+      for (let i = 0; i < Math.floor(B_BROW * 0.3); i++) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const t = Math.random();
+        const x = side * (0.06 + t * 0.26);
+        const y = -0.32 + Math.sin(t * Math.PI) * 0.035 + (Math.random() - 0.5) * 0.02;
+        const c = mixColor(BROW, { r: 55, g: 38, b: 42 }, Math.random());
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۵. چشم‌ها — بادامی، باز، با جزئیات
+         ═══════════════════════════════════════════ */
+      const eyeCenterX = 0.19;
+      const eyeCenterY = -0.15;
+      const eyeW = 0.115;   /* نیم‌عرض */
+      const eyeH = 0.058;   /* نیم‌ارتفاع */
+
+      const eyeBudget = B_EYES;
+      const B_EYE_WHITE = Math.floor(eyeBudget * 0.20);
+      const B_IRIS = Math.floor(eyeBudget * 0.30);
+      const B_PUPIL = Math.floor(eyeBudget * 0.10);
+      const B_LASH = Math.floor(eyeBudget * 0.22);
+      const B_CATCH = Math.floor(eyeBudget * 0.08);
+      const B_EYE_LID = eyeBudget - B_EYE_WHITE - B_IRIS - B_PUPIL - B_LASH - B_CATCH;
+
+      for (let side of [1, -1]) {
+        const ecx = side * eyeCenterX;
+        const ecy = eyeCenterY;
+
+        /* سفیدی چشم — بیضی داخلی */
+        for (let i = 0; i < B_EYE_WHITE; i++) {
+          const a = Math.random() * TAU;
+          const rr = Math.sqrt(Math.random());
+          const x = ecx + Math.cos(a) * (eyeW - 0.02) * rr * side;
+          const y = ecy + Math.sin(a) * (eyeH - 0.015) * rr;
+          const shade = 0.85 + Math.random() * 0.15;
+          pts.push({
+            x: x, y: y,
+            r: Math.round(EYE_WHITE.r * shade),
+            g: Math.round(EYE_WHITE.g * shade),
+            b: Math.round(EYE_WHITE.b * shade)
+          });
+        }
+
+        /* عنبیه — دایرهٔ قهوه‌ای */
+        const irisR = 0.052;
+        for (let i = 0; i < B_IRIS; i++) {
+          const a = Math.random() * TAU;
+          const rr = Math.sqrt(Math.random()) * irisR;
+          const x = ecx + Math.cos(a) * rr;
+          const y = ecy + Math.sin(a) * rr;
+          const t = rr / irisR;
+          const c = mixColor(IRIS_WARM, IRIS_DARK, t);
+          /* رگه‌های شعاعی عنبیه */
+          const radial = Math.sin(a * 12) * 0.1 + 0.9;
+          pts.push({
+            x: x, y: y,
+            r: Math.round(c.r * radial),
+            g: Math.round(c.g * radial),
+            b: Math.round(c.b * radial)
+          });
+        }
+
+        /* مردمک */
+        for (let i = 0; i < B_PUPIL; i++) {
+          const a = Math.random() * TAU;
+          const rr = Math.sqrt(Math.random()) * 0.022;
+          pts.push({
+            x: ecx + Math.cos(a) * rr,
+            y: ecy + Math.sin(a) * rr,
+            r: PUPIL.r, g: PUPIL.g, b: PUPIL.b
+          });
+        }
+
+        /* خط مژه بالا — ضخیم */
+        for (let i = 0; i < B_LASH; i++) {
+          const t = i / B_LASH;
+          const lx = ecx + Math.cos(Math.PI + t * Math.PI) * eyeW * -side;
+          const ly = ecy - Math.sin(t * Math.PI) * eyeH - 0.008;
+          /* مژه‌های بیرون‌زده */
+          const spike = (t < 0.15 || t > 0.85) ? 0.012 : 0.004;
+          pts.push({
+            x: lx + (Math.random() - 0.5) * 0.006,
+            y: ly - Math.random() * spike,
+            r: LASH.r, g: LASH.g, b: LASH.b
+          });
+        }
+
+        /* خط پایین چشم — نازک‌تر */
+        for (let i = 0; i < B_EYE_LID; i++) {
+          const t = i / Math.max(1, B_EYE_LID - 1);
+          const lx = ecx + Math.cos(Math.PI + t * Math.PI) * eyeW * -side;
+          const ly = ecy + Math.sin(t * Math.PI) * eyeH * 0.85 + 0.004;
+          const c = mixColor({ r: 90, g: 55, b: 45 }, SKIN_SHADOW, t);
+          pts.push({ x: lx, y: ly, r: c.r, g: c.g, b: c.b });
+        }
+
+        /* نقطهٔ نور روی عنبیه */
+        for (let i = 0; i < B_CATCH; i++) {
+          const a = Math.random() * TAU;
+          const rr = Math.random() * 0.012;
+          const hx = ecx + side * -0.018 + Math.cos(a) * rr;
+          const hy = ecy - 0.018 + Math.sin(a) * rr;
+          pts.push({ x: hx, y: hy, r: CATCHLIGHT.r, g: CATCHLIGHT.g, b: CATCHLIGHT.b });
+        }
+      }
+
+      /* ═══════════════════════════════════════════
+         ۶. بینی
+         ═══════════════════════════════════════════ */
+      const noseBudget = B_NOSE;
+      const B_NOSE_BRIDGE = Math.floor(noseBudget * 0.40);
+      const B_NOSE_TIP = Math.floor(noseBudget * 0.30);
+      const B_NOSE_NOSTRIL = noseBudget - B_NOSE_BRIDGE - B_NOSE_TIP;
+
+      /* پل بینی — سایه ملایم عمودی */
+      for (let i = 0; i < B_NOSE_BRIDGE; i++) {
+        const t = i / B_NOSE_BRIDGE;
+        const y = -0.20 + t * 0.28;
+        const x = (Math.random() - 0.5) * 0.05 * (1 - t * 0.3);
+        const c = mixColor(SKIN_SHADOW, SKIN_BASE, t * 0.5);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* نوک بینی — روشن‌تر */
+      for (let i = 0; i < B_NOSE_TIP; i++) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.055;
+        const x = Math.cos(a) * r;
+        const y = 0.05 + Math.sin(a) * r * 0.7;
+        const c = mixColor(SKIN_LIGHT, SKIN_BASE, Math.random());
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* سوراخ‌های بینی */
+      for (let i = 0; i < B_NOSE_NOSTRIL; i++) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.022;
+        pts.push({
+          x: side * 0.062 + Math.cos(a) * r,
+          y: 0.075 + Math.sin(a) * r * 0.5,
+          r: SKIN_DEEP.r, g: SKIN_DEEP.g, b: SKIN_DEEP.b
+        });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۷. دهان باز — با لب، دندان، زبان
+         ═══════════════════════════════════════════ */
+      const mouthBudget = B_MOUTH;
+      const B_LIP_UP = Math.floor(mouthBudget * 0.20);
+      const B_LIP_LOW = Math.floor(mouthBudget * 0.24);
+      const B_TEETH_UP = Math.floor(mouthBudget * 0.22);
+      const B_TEETH_LOW = Math.floor(mouthBudget * 0.06);
+      const B_TONGUE = Math.floor(mouthBudget * 0.16);
+      const B_MOUTH_DARK = mouthBudget - B_LIP_UP - B_LIP_LOW - B_TEETH_UP - B_TEETH_LOW - B_TONGUE;
+
+      /* لب بالای بیرونی */
+      const lipUpOuter = [
+        [-0.20, 0.28], [-0.14, 0.24], [-0.06, 0.21],
+        [0.00, 0.19], [0.06, 0.21], [0.14, 0.24], [0.20, 0.28]
+      ];
+      pts.push.apply(pts, pathToPoints(lipUpOuter, B_LIP_UP, 0.008, () => LIP_TOP));
+
+      /* لب پایین بیرونی */
+      const lipLowOuter = [
+        [-0.20, 0.30], [-0.16, 0.38], [-0.10, 0.45],
+        [0.00, 0.50], [0.10, 0.45], [0.16, 0.38], [0.20, 0.30]
+      ];
+      pts.push.apply(pts, pathToPoints(lipLowOuter, B_LIP_LOW, 0.010, (t) => {
+        return mixColor(LIP_BOT, LIP_EDGE, Math.abs(t - 0.5) * 2);
+      }));
+
+      /* ردیف دندان بالا — بین لب بالا و مرکز دهان */
+      const teethUpY = 0.30;
+      const teethUpTopY = 0.24;
+      const teethUpWidth = 0.16;
+      const numTeethUp = 8;
+      for (let i = 0; i < B_TEETH_UP; i++) {
+        const tooth = i % numTeethUp;
+        const toothT = tooth / numTeethUp;
+        /* فاصله بین دندان‌ها */
+        const gapNoise = (Math.sin(tooth * 3.7) * 0.5 + 0.5) * 0.005;
+        const tx = -teethUpWidth + 2 * teethUpWidth * toothT + gapNoise;
+        const ty = teethUpTopY + Math.random() * (teethUpY - teethUpTopY);
+        /* سایه بین دندان‌ها */
+        const isGap = Math.abs(((toothT * numTeethUp) % 1) - 0.5) < 0.08;
+        const c = isGap ? TOOTH_SHAD : TOOTH;
+        pts.push({
+          x: tx + (Math.random() - 0.5) * 0.008,
+          y: ty,
+          r: c.r, g: c.g, b: c.b
+        });
+      }
+
+      /* ردیف دندان پایین — کوچک، پایین دهان */
+      for (let i = 0; i < B_TEETH_LOW; i++) {
+        const tx = (Math.random() - 0.5) * 0.22;
+        const ty = 0.42 + Math.random() * 0.04;
+        pts.push({
+          x: tx, y: ty,
+          r: TOOTH.r, g: TOOTH.g, b: TOOTH.b
+        });
+      }
+
+      /* زبان — داخل دهان */
+      for (let i = 0; i < B_TONGUE; i++) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.09;
+        const x = Math.cos(a) * r;
+        const y = 0.34 + Math.sin(a) * r * 0.7;
+        const c = mixColor(TONGUE, { r: 180, g: 90, b: 100 }, Math.random() * 0.4);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* فضای تیرهٔ دهان — بین دندان‌ها و زبان */
+      for (let i = 0; i < B_MOUTH_DARK; i++) {
+        const x = (Math.random() - 0.5) * 0.32;
+        const y = 0.28 + Math.random() * 0.20;
+        const c = mixColor(MOUTH_DARK, { r: 100, g: 40, b: 50 }, Math.random() * 0.4);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۸. گونه‌ها — رژ
+         ═══════════════════════════════════════════ */
+      for (let i = 0; i < B_CHEEK; i++) {
+        const side = i % 2 === 0 ? 1 : -1;
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.10;
+        pts.push({
+          x: side * 0.26 + Math.cos(a) * r,
+          y: 0.06 + Math.sin(a) * r * 0.7,
+          r: BLUSH.r, g: BLUSH.g, b: BLUSH.b
+        });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۹. چانه و سایهٔ زیر لب
+         ═══════════════════════════════════════════ */
+      for (let i = 0; i < B_CHIN; i++) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.10;
+        const x = Math.cos(a) * r;
+        const y = 0.58 + Math.sin(a) * r * 0.5;
+        const c = mixColor(SKIN_BASE, SKIN_SHADOW, Math.random() * 0.4);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۱۰. گردن
+         ═══════════════════════════════════════════ */
+      for (let i = 0; i < B_NECK; i++) {
+        const x = (Math.random() - 0.5) * 0.30;
+        const y = 0.62 + Math.random() * 0.20;
+        const c = mixColor(SKIN_BASE, SKIN_SHADOW, Math.random() * 0.5);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۱۱. گوشوارهٔ طلایی — گوش راست (سمت چپ بیننده)
+         ═══════════════════════════════════════════ */
+      const earringN = B_EARRING;
+      const earX = -0.36;
+      const earY = 0.05;
+      for (let i = 0; i < earringN; i++) {
+        const a = Math.random() * TAU;
+        /* حلقهٔ طلایی */
+        const angle = Math.random() * TAU;
+        const ringR = 0.035;
+        const thickness = Math.random() * 0.008;
+        const x = earX + Math.cos(angle) * ringR + (Math.random() - 0.5) * thickness;
+        const y = earY + Math.sin(angle) * ringR * 1.2 + (Math.random() - 0.5) * thickness;
+        const c = mixColor(GOLD, GOLD_DEEP, Math.random());
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* ═══════════════════════════════════════════
+         ۱۲. لباس پایین — کت قرمز، پیراهن سفید، کراوات سبز
+         ═══════════════════════════════════════════ */
+      const coatN = B_CLOTHES;
+      const B_RED = Math.floor(coatN * 0.55);
+      const B_WHITE = Math.floor(coatN * 0.28);
+      const B_TIE = coatN - B_RED - B_WHITE;
+
+      /* کت قرمز */
+      for (let i = 0; i < B_RED; i++) {
+        const x = (Math.random() - 0.5) * 1.4;
+        const y = 0.85 + Math.random() * 0.30;
+        /* دور یقه سفید خالی بمونه */
+        if (Math.abs(x) < 0.15 && y < 1.05) continue;
+        const c = mixColor(RED_COAT, { r: 140, g: 20, b: 25 }, Math.random() * 0.5);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* پیراهن سفید — یقه */
+      for (let i = 0; i < B_WHITE; i++) {
+        const x = (Math.random() - 0.5) * 0.26;
+        const y = 0.82 + Math.random() * 0.25;
+        /* ناحیهٔ مثلثی یقه */
+        const yc = (y - 0.82) / 0.25;
+        const maxX = 0.15 * (1 - yc * 0.6);
+        if (Math.abs(x) > maxX) continue;
+        const c = mixColor(WHITE_SHIRT, { r: 220, g: 215, b: 205 }, Math.random() * 0.4);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* کراوات سبز */
+      for (let i = 0; i < B_TIE; i++) {
+        const t = i / B_TIE;
+        /* کراوات باریک مثلثی */
+        const y = 0.95 + t * 0.25;
+        const width = 0.055 - t * 0.02;
+        const x = (Math.random() - 0.5) * 2 * width;
+        const c = mixColor(GREEN_TIE, { r: 15, g: 50, b: 35 }, Math.random() * 0.5);
+        pts.push({ x: x, y: y, r: c.r, g: c.g, b: c.b });
+      }
+
+      /* پر کردن کمبود */
+      while (pts.length < n) {
+        const a = Math.random() * TAU;
+        const r = Math.sqrt(Math.random()) * 0.30;
+        pts.push({
+          x: Math.cos(a) * r,
+          y: Math.sin(a) * r - 0.05,
+          r: SKIN_BASE.r, g: SKIN_BASE.g, b: SKIN_BASE.b
+        });
+      }
+
+      return pts.slice(0, n);
+    }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     متادیتا
+     ═══════════════════════════════════════════════════════ */
+  const SHAPE_ORDER = ['rose', 'daisy', 'sunflower', 'lotus', 'poppy', 'woman'];
+  const SHAPE_META = {
+    rose:      { label: 'ROSE',      rotation: 0.045, color: '#d97ba0' },
+    daisy:     { label: 'DAISY',     rotation: 0.030, color: '#e8e0b8' },
+    sunflower: { label: 'SUNFLOWER', rotation: 0.022, color: '#e6b040' },
+    lotus:     { label: 'LOTUS',     rotation: 0.018, color: '#b48ae6' },
+    poppy:     { label: 'POPPY',     rotation: 0.038, color: '#d64550' },
+    woman:     { label: 'WOMAN',     rotation: 0.005, color: '#e0b89a' }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     ذرات — چهره بیشترین سهم رو می‌گیره
+     ═══════════════════════════════════════════════════════ */
+  const N_BASE = prefersReduced ? 1400 :
+                 (isMobile || lowEnd) ? 3800 : 7500;
+
+  /* چهره ۵۰٪ ذرات بیشتر می‌گیره */
+  const N_WOMAN = Math.floor(N_BASE * 1.5);
+  const N = N_WOMAN;   /* آرایه به اندازهٔ بزرگ‌ترین شکل */
+
+  const particles = [];
+  for (let i = 0; i < N; i++) {
+    const a = Math.random() * TAU;
+    const r = 0.4 + Math.random() * 0.6;
+    const depth = Math.pow(Math.random(), 1.3);
+    particles.push({
+      cx: Math.cos(a) * r, cy: Math.sin(a) * r,
+      sx: 0, sy: 0, tx: 0, ty: 0,
+      cr: 217, cg: 164, cb: 65,
+      sr: 217, sg: 164, sb: 65,
+      tr: 217, tg: 164, tb: 65,
+      ox: 0, oy: 0, vx: 0, vy: 0,
+      depth: depth,
+      parallax: 0.35 + depth * 0.85,
+      size: 0.55 + depth * 1.0 + Math.random() * 0.3,
+      seed: Math.random() * TAU,
+      sensitivity: 0.7 + Math.random() * 1.1,
+      skipPhysics: depth < 0.28,
+      /* ذرات اضافی که فقط برای چهره استفاده می‌شن */
+      onlyFor: i >= N_BASE ? 'woman' : null,
+      /* موقعیت پنهان وقتی استفاده نمی‌شن */
+      hidden: false
+    });
+  }
+
+  /* ─── Sparkles ─── */
+  const SPARKLE_COUNT = prefersReduced ? 120 :
+                        (isMobile || lowEnd) ? 320 : 620;
+  const sparkles = [];
+  for (let i = 0; i < SPARKLE_COUNT; i++) {
+    sparkles.push({
+      angle: Math.random() * TAU,
+      radius: 0.15 + Math.random() * 0.95,
+      speed: (Math.random() < 0.5 ? 1 : -1) * (0.05 + Math.random() * 0.18),
+      size: 0.3 + Math.random() * 0.85,
+      twinkle: Math.random() * TAU,
+      twinkleSpeed: 0.8 + Math.random() * 3.2,
+      colorSeed: Math.random()
+    });
+  }
+
+  /* ─── اتصالات ─── */
+  let links = [];
+  function buildLinks() {
+    const arr = [];
+    const maxConsider = Math.min(240, N_BASE);
+    const threshold = 0.05;
+    const maxLinks = 350;
+    for (let i = 0; i < maxConsider && arr.length < maxLinks; i++) {
+      const a = particles[i];
+      let bestJ = -1, bestD = threshold;
+      const end = Math.min(i + 30, maxConsider);
+      for (let j = i + 1; j < end; j++) {
+        const b = particles[j];
+        const dx = b.tx - a.tx, dy = b.ty - a.ty;
+        const d = dx * dx + dy * dy;
+        if (d < bestD * bestD) { bestD = Math.sqrt(d); bestJ = j; }
+      }
+      if (bestJ > -1) arr.push([i, bestJ]);
+    }
+    links = arr;
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     State
+     ═══════════════════════════════════════════════════════ */
+  let currentShape = 'rose';
+  let morphProgress = 1;
+  const MORPH_DURATION = 1.4;
+  const HOLD_DURATION = 4.5;
+  let holdTimer = 0;
+  let time = 0;
+  let paused = false;
+  let targetPause = 1;
+  let currentPause = 1;
+  let running = true;
+  let rafId = null;
+  let lastT = performance.now();
+  let fpsAcc = 0, fpsCount = 0;
+
+  let targetMX = 0.5, targetMY = 0.5;
+  let currentMX = 0.5, currentMY = 0.5;
+  let smoothMX = 0.5, smoothMY = 0.5;
+  let sensorActive = false;
+  let motionMagnitude = 0;
+  let lastMotionMag = 9.8;
+
+  let nextPulseTime = 2;
+  const activePulses = [];
+
+  /* ═══════════════════════════════════════════════════════
+     تخصیص شکل
+     ═══════════════════════════════════════════════════════ */
+  function assignShape(shapeName) {
+    /* تعداد ذرات مؤثر بر اساس شکل */
+    const isWoman = shapeName === 'woman';
+    const activeN = isWoman ? N : N_BASE;
+
+    /* شکل رو با تعداد مناسب تولید کن */
+    const targets = ShapeGen[shapeName](activeN);
+
+    /* ذرات اضافی برای چهره */
+    for (let i = N_BASE; i < N; i++) {
+      particles[i].hidden = !isWoman;
+    }
+
+    /* تخصیص */
+    const sortedP = particles
+      .map((p, i) => ({ p, i, a: Math.atan2(p.cy, p.cx) }))
+      .sort((A, B) => A.a - B.a);
+
+    const sortedT = targets
+      .map((t, i) => ({ t, a: Math.atan2(t.y, t.x) }))
+      .sort((A, B) => A.a - B.a);
+
+    /* ذرات پایه به کل فرم */
+    for (let i = 0; i < N_BASE; i++) {
+      const p = sortedP[i].p;
+      const t = sortedT[i].t;
+      p.sx = p.cx; p.sy = p.cy;
+      p.tx = t.x;  p.ty = t.y;
+      p.sr = p.cr; p.sg = p.cg; p.sb = p.cb;
+      p.tr = t.r;  p.tg = t.g;  p.tb = t.b;
+    }
+
+    /* ذرات اضافی (فقط برای چهره) */
+    if (isWoman) {
+      for (let i = N_BASE; i < N; i++) {
+        const p = sortedP[i].p;
+        const t = sortedT[i].t;
+        p.sx = p.cx; p.sy = p.cy;
+        p.tx = t.x;  p.ty = t.y;
+        p.sr = p.cr; p.sg = p.cg; p.sb = p.cb;
+        p.tr = t.r;  p.tg = t.g;  p.tb = t.b;
+      }
+    } else {
+      /* ذرات اضافی رو مخفی کن */
+      for (let i = N_BASE; i < N; i++) {
+        const p = sortedP[i].p;
+        p.sx = p.cx; p.sy = p.cy;
+        p.tx = p.cx; p.ty = p.cy;
+      }
+    }
+
+    currentShape = shapeName;
+    morphProgress = 0;
+    holdTimer = 0;
+    buildLinks();
+    activePulses.push({ start: time, strength: 0.8 });
+    updateShapeUI();
+  }
+
+  function updateShapeUI() {
+    const idx = SHAPE_ORDER.indexOf(currentShape);
+    const labelEl = document.getElementById('shapeLabel');
+    const numEl = document.getElementById('shapeNum');
+    const phaseEl = document.getElementById('phaseLabel');
+
+    if (labelEl) {
+      labelEl.style.opacity = '0';
+      setTimeout(() => {
+        labelEl.textContent = SHAPE_META[currentShape].label;
+        labelEl.style.opacity = '1';
+      }, 180);
+    }
+    if (numEl) {
+      numEl.textContent = String(idx + 1).padStart(2, '0') + ' / ' +
+                         String(SHAPE_ORDER.length).padStart(2, '0');
+    }
+    if (phaseEl) phaseEl.textContent = 'MORPH';
+
+    const track = document.getElementById('progressTrack');
+    if (track) {
+      track.innerHTML = SHAPE_ORDER.map((s, i) => {
+        const c = i === idx ? SHAPE_META[s].color : 'rgba(232, 226, 212, 0.18)';
+        return '<span class="progress-dot' + (i === idx ? ' active' : '') +
+               '" style="background:' + c + ';color:' + c + '"></span>';
+      }).join('');
+    }
+  }
+
+  function nextShape() {
+    const idx = SHAPE_ORDER.indexOf(currentShape);
+    assignShape(SHAPE_ORDER[(idx + 1) % SHAPE_ORDER.length]);
+  }
+  function prevShape() {
+    const idx = SHAPE_ORDER.indexOf(currentShape);
+    assignShape(SHAPE_ORDER[(idx - 1 + SHAPE_ORDER.length) % SHAPE_ORDER.length]);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     رسم
+     ═══════════════════════════════════════════════════════ */
+  function draw() {
+    const fadeAlpha = morphProgress < 1 ? 0.10 : 0.20;
+    ctx.fillStyle = 'rgba(5, 5, 10, ' + fadeAlpha + ')';
+    ctx.fillRect(0, 0, W, H);
+
+    const px = (currentMX - 0.5) * 30;
+    const py = (currentMY - 0.5) * 30;
+
+    const breathe = 1 + Math.sin(time * 0.5) * 0.022 * currentPause;
+    const shapeRot = SHAPE_META[currentShape].rotation * time * currentPause;
+
+    const glowIntensity = 0.03 + (1 - morphProgress) * 0.035 + motionMagnitude * 0.04;
+    if (glowIntensity > 0.005) {
+      const glowR = Math.min(W, H) * 0.62;
+      const glow = ctx.createRadialGradient(CX + px, CY + py, 0, CX + px, CY + py, glowR);
+      glow.addColorStop(0, 'rgba(217, 164, 65, ' + glowIntensity.toFixed(3) + ')');
+      glow.addColorStop(1, 'rgba(5, 5, 10, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    /* اتصالات */
+    if (links.length && currentShape !== 'woman') {
+      ctx.strokeStyle = 'rgba(217, 164, 65, ' + (0.08 + motionMagnitude * 0.12).toFixed(3) + ')';
+      ctx.lineWidth = 0.55;
+      ctx.beginPath();
+      for (let k = 0; k < links.length; k++) {
+        const [i, j] = links[k];
+        const a = particles[i], b = particles[j];
+        const ax = CX + px + (a.tx + a.ox) * SCALE * breathe;
+        const ay = CY + py + (a.ty + a.oy) * SCALE * breathe;
+        const bx = CX + px + (b.tx + b.ox) * SCALE * breathe;
+        const by = CY + py + (b.ty + b.oy) * SCALE * breathe;
+        ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+      }
+      ctx.stroke();
+    }
+
+    /* پالس‌ها */
+    if (activePulses.length) {
+      for (let i = activePulses.length - 1; i >= 0; i--) {
+        const pu = activePulses[i];
+        const age = (time - pu.start) * 0.8;
+        if (age > 1.4) { activePulses.splice(i, 1); continue; }
+        const r = age * SCALE * breathe;
+        const alpha = pu.strength * (1 - age / 1.4) * 0.35;
+        if (alpha > 0.01) {
+          ctx.strokeStyle = 'rgba(217, 164, 65, ' + alpha.toFixed(3) + ')';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(CX + px, CY + py, r, 0, TAU);
+          ctx.stroke();
+        }
+      }
+    }
+
+    /* ذرات */
+    const invScale = 1 / (SCALE * breathe);
+    const e = morphProgress >= 1 ? 1 : easeInOutCubic(morphProgress);
+    const isMorphing = morphProgress < 1;
+    const isWoman = currentShape === 'woman';
+    const activeN = isWoman ? N : N_BASE;
+
+    for (let i = 0; i < activeN; i++) {
+      const p = particles[i];
+      if (p.hidden) continue;
+
+      let bx, by;
+      if (isMorphing) {
+        bx = lerp(p.sx, p.tx, e);
+        by = lerp(p.sy, p.ty, e);
+      } else {
+        bx = p.tx; by = p.ty;
+      }
+
+      const sway = Math.sin(time * 0.85 + p.seed) * 0.0022 * currentPause;
+      bx += sway; by += sway * 0.7;
+
+      const fx = bx + p.ox;
+      const fy = by + p.oy;
+
+      let cr, cg, cb;
+      if (isMorphing) {
+        cr = Math.round(lerp(p.sr, p.tr, e));
+        cg = Math.round(lerp(p.sg, p.tg, e));
+        cb = Math.round(lerp(p.sb, p.tb, e));
+      } else {
+        cr = p.tr; cg = p.tg; cb = p.tb;
+      }
+
+      const sizeBoost = isMorphing ? 1 + Math.sin(morphProgress * Math.PI) * 0.22 : 1;
+      /* ذرات چهره کوچک‌تر برای جزئیات بیشتر */
+      const sizeBase = isWoman ? 0.35 : 0.55;
+      const sz = p.size * invScale * sizeBase * sizeBoost;
+
+      const depthAlpha = 0.35 + p.depth * 0.55;
+      /* ذرات چهره با آلفای بالاتر */
+      const womanBoost = isWoman ? 1.15 : 1;
+      const alpha = clamp(
+        (isMorphing ? (0.45 + e * 0.4) : (0.75 + Math.sin(time * 1.2 + p.seed) * 0.10)) * depthAlpha * womanBoost,
+        0, 1
+      );
+
+      const cX = fx * SCALE * breathe + CX + px;
+      const cY = fy * SCALE * breathe + CY + py;
+
+      if (sz < 1.0) {
+        const s2 = sz * 2;
+        ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + alpha.toFixed(3) + ')';
+        ctx.fillRect(cX - sz, cY - sz, s2, s2);
+      } else {
+        ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + alpha.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(cX, cY, sz, 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    /* Sparkles */
+    const shapeColorHex = SHAPE_META[currentShape].color;
+    const scR = parseInt(shapeColorHex.slice(1, 3), 16);
+    const scG = parseInt(shapeColorHex.slice(3, 5), 16);
+    const scB = parseInt(shapeColorHex.slice(5, 7), 16);
+
+    for (let i = 0; i < SPARKLE_COUNT; i++) {
+      const s = sparkles[i];
+      const ang = s.angle + time * s.speed * currentPause;
+      const rad = s.radius * SCALE * breathe;
+      const sx = CX + px + Math.cos(ang) * rad;
+      const sy = CY + py + Math.sin(ang) * rad;
+      const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time * s.twinkleSpeed + s.twinkle));
+      const alpha = twinkle * 0.55;
+      const c = mixColor({ r: 255, g: 245, b: 215 }, { r: scR, g: scG, b: scB }, s.colorSeed * 0.6);
+      ctx.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha.toFixed(3) + ')';
+      const sz = s.size;
+      ctx.fillRect(sx - sz, sy - sz, sz * 2, sz * 2);
+    }
+
+    /* هسته */
+    const coreR = 2.5 + Math.sin(time * 1.4) * 0.7;
+    ctx.fillStyle = 'rgba(255, 250, 235, 0.9)';
+    ctx.beginPath();
+    ctx.arc(CX + px, CY + py, coreR, 0, TAU);
+    ctx.fill();
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     حلقه
+     ═══════════════════════════════════════════════════════ */
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+
+    fpsAcc += dt; fpsCount++;
+    if (fpsAcc >= 0.5) {
+      const fps = fpsCount / fpsAcc;
+      const fpsEl = document.getElementById('fpsLabel');
+      if (fpsEl) fpsEl.textContent = Math.round(fps) + ' fps';
+      fpsAcc = 0; fpsCount = 0;
+      if (fps < 26 && DPR_CAP > 1.0) {
+        DPR_CAP = Math.max(1.0, DPR_CAP - 0.2);
+        resize();
+      }
+    }
+
+    currentPause += (targetPause - currentPause) * 0.08;
+    currentMX += (targetMX - currentMX) * 0.10;
+    currentMY += (targetMY - currentMY) * 0.10;
+
+    const ax = (currentMX - 0.5) * 2;
+    const ay = (currentMY - 0.5) * 2;
+    const accelStrength = 0.0055 * (1 + motionMagnitude * 2.2);
+
+    const isWoman = currentShape === 'woman';
+    const activeN = isWoman ? N : N_BASE;
+
+    for (let i = 0; i < activeN; i++) {
+      const p = particles[i];
+      if (p.hidden) continue;
+      if (p.skipPhysics) {
+        p.ox *= 0.94; p.oy *= 0.94;
+        continue;
+      }
+      p.vx += ax * p.sensitivity * accelStrength;
+      p.vy += ay * p.sensitivity * accelStrength;
+      p.vx += -p.ox * 0.016;
+      p.vy += -p.oy * 0.016;
+      p.vx *= 0.955;
+      p.vy *= 0.955;
+      p.ox += p.vx * currentPause;
+      p.oy += p.vy * currentPause;
+      const maxOff = isWoman ? 0.06 : 0.16;
+      if (p.ox > maxOff) p.ox = maxOff;
+      if (p.ox < -maxOff) p.ox = -maxOff;
+      if (p.oy > maxOff) p.oy = maxOff;
+      if (p.oy < -maxOff) p.oy = -maxOff;
+    }
+
+    motionMagnitude *= 0.93;
+
+    if (morphProgress < 1) {
+      morphProgress += dt / MORPH_DURATION;
+      if (morphProgress >= 1) {
+        morphProgress = 1;
+        const phaseEl = document.getElementById('phaseLabel');
+        if (phaseEl) phaseEl.textContent = 'HOLD';
+      }
+    } else {
+      holdTimer += dt * currentPause;
+      if (holdTimer >= HOLD_DURATION) nextShape();
+    }
+
+    if (time > nextPulseTime) {
+      activePulses.push({ start: time, strength: 0.6 });
+      nextPulseTime = time + 3.5 + Math.random() * 3;
+    }
+
+    time += dt * currentPause;
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     ورودی
+     ═══════════════════════════════════════════════════════ */
+  window.addEventListener('mousemove', function (e) {
+    if (sensorActive) return;
+    targetMX = clamp(e.clientX / W, 0, 1);
+    targetMY = clamp(e.clientY / H, 0, 1);
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function (e) {
+    if (sensorActive) return;
+    if (e.touches.length) {
+      const t = e.touches[0];
+      targetMX = clamp(t.clientX / W, 0, 1);
+      targetMY = clamp(t.clientY / H, 0, 1);
+    }
+  }, { passive: true });
+
+  function handleMotion(e) {
+    const a = e.accelerationIncludingGravity || e.acceleration;
+    if (!a) return;
+    if (!sensorActive) {
+      sensorActive = true;
+      const sEl = document.getElementById('sensorLabel');
+      if (sEl) sEl.textContent = 'SENSOR · ACTIVE';
+      const hEl = document.getElementById('sensorHint');
+      if (hEl) hEl.textContent = 'TILT · SHAKE · TO · MOVE · PARTICLES';
+    }
+    const x = a.x || 0, y = a.y || 0, z = a.z || 0;
+    const gx = clamp(x / 3.5, -1.5, 1.5);
+    const gy = clamp(y / 3.5, -1.5, 1.5);
+    smoothMX += (gx - smoothMX) * 0.25;
+    smoothMY += (gy - smoothMY) * 0.25;
+    targetMX = clamp(0.5 + smoothMX * 0.55, 0, 1);
+    targetMY = clamp(0.5 + smoothMY * 0.55, 0, 1);
+    const mag = Math.hypot(x, y, z);
+    const deltaMag = Math.abs(mag - lastMotionMag);
+    if (deltaMag > 3.5) motionMagnitude = Math.min(1, motionMagnitude + deltaMag * 0.09);
+    lastMotionMag = mag;
+  }
+
+  function setupMotion() {
+    if (!window.DeviceMotionEvent) {
+      const sEl = document.getElementById('sensorLabel');
+      if (sEl) sEl.textContent = 'SENSOR · N/A';
+      const hEl = document.getElementById('sensorHint');
+      if (hEl) hEl.textContent = 'MOVE · MOUSE · TO · SHAKE · PARTICLES';
+      return;
+    }
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      const sEl = document.getElementById('sensorLabel');
+      if (sEl) sEl.textContent = 'SENSOR · TAP TO ENABLE';
+      const ask = function () {
+        DeviceMotionEvent.requestPermission().then(function (state) {
+          if (state === 'granted') {
+            window.addEventListener('devicemotion', handleMotion, { passive: true });
+          }
+        }).catch(function () {});
+        window.removeEventListener('click', ask);
+        window.removeEventListener('touchstart', ask);
+      };
+      window.addEventListener('click', ask);
+      window.addEventListener('touchstart', ask, { passive: true });
+    } else {
+      window.addEventListener('devicemotion', handleMotion, { passive: true });
+    }
+  }
+
+  let clickLock = 0;
+  window.addEventListener('click', function (e) {
+    if (e.target.closest('.pause-btn')) return;
+    const now = performance.now();
+    if (now - clickLock < 300) return;
+    clickLock = now;
+    if (morphProgress < 0.8) return;
+    nextShape();
+  });
+
+  window.addEventListener('wheel', function (e) {
+    const now = performance.now();
+    if (now - clickLock < 450) return;
+    clickLock = now;
+    if (e.deltaY > 0) nextShape(); else prevShape();
+  }, { passive: true });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
+    if (e.code === 'ArrowRight' || e.code === 'ArrowDown') { if (morphProgress >= 0.8) nextShape(); }
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowUp') { if (morphProgress >= 0.8) prevShape(); }
+  });
+
+  const pauseBtn = document.getElementById('pauseBtn');
+  function setPaused(p) {
+    paused = p;
+    pauseBtn.classList.toggle('paused', p);
+    targetPause = p ? 0.04 : 1;
+  }
+  pauseBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setPaused(!paused);
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+    } else if (!running) {
+      running = true;
+      lastT = performance.now();
+      rafId = requestAnimationFrame(loop);
+    }
+  });
+
+  let rzTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(rzTimer);
+    rzTimer = setTimeout(resize, 150);
+  }, { passive: true });
+
+  /* راه‌اندازی */
+  resize();
+  assignShape('rose');
+  setupMotion();
+
+  const pcEl = document.getElementById('particleCount');
+  if (pcEl) pcEl.textContent = N;
+
+  if (prefersReduced) targetPause = 0.45;
+
+  lastT = performance.now();
+  rafId = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+  </html>
